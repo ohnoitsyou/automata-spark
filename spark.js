@@ -8,7 +8,8 @@ var Spark = function() {
   this.username,
   this.password,
   this.knownDevices = [],
-  this.deviceRefreshInterval,
+  this.deviceInterval,
+  this.deviceRefreshInterval = 10000,
   this.load = function(options) {
     console.log('[Spark] [Load] Starting');
     if('sparkAccessToken' in options) {
@@ -25,7 +26,7 @@ var Spark = function() {
     console.log('[Spark] [Initilize] Starting');
     _login(this.accessToken);
     _getDevices(this);
-    this.deviceRefreshInterval = setInterval(_getDevices,10000,this);
+    this.deviceInterval = setInterval(_getDevices,this.deviceRefreshInterval,this);
     console.log('[Spark] [Initilize] Finishing');
   }
 }
@@ -57,17 +58,13 @@ function _getDevices(t) {
             // we only really care if it changest state
             if(!device.connected) {
               console.log('[Spark] [DeviceList] Device gone offline',device.name);
-            } else {
-              console.log('[Spark] [DeviceList] Device still online',device.name);
             }
           } else {
             // It wasn't connected before, did it come back online
             if(device.connected) {
               // it came back!
               console.log('[Spark] [DeviceList] Device came back online',device.name);
-            } else {
-              console.log('[Spark] [DeviceList] Device still offline');
-            }
+            } 
           }
         } else {
           // We haven't seen the device before
