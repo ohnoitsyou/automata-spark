@@ -4,6 +4,7 @@ var spark = require('spark');
 var util = require('util');
 
 var Spark = function() {
+  this.version = '0.1.0',
   this.accessToken,
   this.username,
   this.password,
@@ -28,6 +29,12 @@ var Spark = function() {
     _getDevices(this);
     this.deviceInterval = setInterval(_getDevices,this.deviceRefreshInterval,this);
     console.log('[Spark] [Initilize] Finishing');
+  },
+  this.routes = function() {
+    router.get('devices', function(req, res) {
+      res.send(this.knownDevices);
+    });
+    return router;
   }
 }
 function _login(token) {
