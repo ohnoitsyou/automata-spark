@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var spark = require('spark');
 var util = require('util');
+var debug = require('debug')('spark');
 
 var Spark = function() {
   this.version = '0.1.0',
@@ -12,40 +13,54 @@ var Spark = function() {
   this.deviceInterval,
   this.deviceRefreshInterval = 10000,
   this.load = function(options) {
-    console.log('[Spark] [Load] Starting');
+    debug('[Load] Starting');
     if('sparkAccessToken' in options) {
       this.accessToken = options['sparkAccessToken'];
     } else if('sparkUsername' in options && 'sparkPassword' in options) {
       this.username = options['sparkUsername'];
       this.password = options['sparkPassword'];
     } else {
-      console.log('[Spark] [Load] No access token provided');
+      debug('[Load] No login method provided');
     }
-    console.log('[Spark] [Load] Finishing');
+    debug('[Load] Finishing');
   },
   this.initilize = function() {
-    console.log('[Spark] [Initilize] Starting');
-    _login(this.accessToken);
+    debug('[Initilize] Starting');
+    _login(this);
     _getDevices(this);
     this.deviceInterval = setInterval(_getDevices,this.deviceRefreshInterval,this);
-    console.log('[Spark] [Initilize] Finishing');
+    debug('[Initilize] Finishing');
   },
-  this.routes = function() {
+  this.loadRoutes = function() {
+    debug('[LoadRoutes] Starting');
     router.get('devices', function(req, res) {
       res.send(this.knownDevices);
     });
+    router.get('sendCommand', function(req, res) {
+      res.send('ok');
+    });
+    debug('[LoadRoutes] Finishing');
     return router;
   }
 }
-function _login(token) {
-  console.log('[Spark] [Login] Starting');
-  return spark.login({'accessToken': token}).then(function(token) {
+function _login(t) {
+  debug('[Login] Starting');
+  var loginMethod = {};
+  if(t.accessToken != "") {
+    loginMethod['accessToken'] = t.accessToken;
+  } else if(this.username != "" && t.password != "") {
+    loginMethod['username'] = t.username;
+    loginMethod['password'] = t.password;
+  } else {
+    debug('[Login] No auth method supplied');
+  }
+  return spark.login(loginMethod).then(function(token) {
     this.accessToken = token;
-    console.log('[Spark] [Login] Success:');//,token);
+    debug('[Login] Success:');//,token);
   }, function(error) {
-    console.log('[Spark] [Login] Error:',error);
+    debug('[Login] Error: %s',error);
   });
-  console.log('[Spark] [Login] Finishing');
+  debug('[Login] Finishing');
 }
 function _getDevices(t) {
   spark.listDevices().then(
@@ -64,13 +79,15 @@ function _getDevices(t) {
           if(t.knownDevices[device.name].connected) {
             // we only really care if it changest state
             if(!device.connected) {
-              console.log('[Spark] [DeviceList] Device gone offline',device.name);
+              debug('[DeviceList] Device gone offline %s',device.name);
+              t.knownDevices[device.name] = device;
             }
           } else {
             // It wasn't connected before, did it come back online
             if(device.connected) {
               // it came back!
-              console.log('[Spark] [DeviceList] Device came back online',device.name);
+              debug('[DeviceList] Device came back online %s',device.name);
+              t.knownDevices[device.name] = device;
             } 
           }
         } else {
@@ -78,14 +95,14 @@ function _getDevices(t) {
           t.knownDevices[device.name] = device;
           // is it online or not?
           if(device.connected) {
-            console.log('[Spark] [DeviceList] New online device',device.name);
+            debug('[DeviceList] New online device %s',device.name);
           } else {
-            console.log('[Spark] [DeviceList] New offline device',device.name);
+            debug('[DeviceList] New offline device %s',device.name);
           }
         }
       });
     }, function(error) {
-        console.log('[Spark] [DeviceList] Failure getting devices',error);
+        debug('[DeviceList] Failure getting devices %s',error);
     }
   );
 }
