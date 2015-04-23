@@ -1,5 +1,4 @@
 var express = require('express');
-var router = express.Router();
 var spark = require('spark');
 var util = require('util');
 var debug = require('debug')('spark');
@@ -9,6 +8,7 @@ var Spark = function() {
   this.accessToken,
   this.username,
   this.password,
+  this.router = express.Router(),
   this.knownDevices = [],
   this.deviceInterval,
   this.deviceRefreshInterval = 10000,
@@ -33,14 +33,17 @@ var Spark = function() {
   },
   this.loadRoutes = function() {
     debug('[LoadRoutes] Starting');
-    router.get('devices', function(req, res) {
-      res.send(this.knownDevices);
+    this.router.get('/devices', function(req, res) {
+      res.send(JSON.stringify(this.knownDevices));
     });
-    router.get('sendCommand', function(req, res) {
+    this.router.get('/sendCommand', function(req, res) {
       res.send('ok');
     });
+    this.router.get('/', function(req, res) {
+      res.send('Spark!');
+    });
     debug('[LoadRoutes] Finishing');
-    return router;
+    return this.router;
   }
 }
 function _login(t) {
@@ -79,14 +82,14 @@ function _getDevices(t) {
           if(t.knownDevices[device.name].connected) {
             // we only really care if it changest state
             if(!device.connected) {
-              debug('[DeviceList] Device gone offline %s',device.name);
+              debug('[DeviceList] Device has gone offline %s',device.name);
               t.knownDevices[device.name] = device;
             }
           } else {
             // It wasn't connected before, did it come back online
             if(device.connected) {
               // it came back!
-              debug('[DeviceList] Device came back online %s',device.name);
+              debug('[DeviceList] Device has come back online %s',device.name);
               t.knownDevices[device.name] = device;
             } 
           }
