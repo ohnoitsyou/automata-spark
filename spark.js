@@ -6,7 +6,7 @@ var debug = require("debug")("spark");
 
 var Spark = function() {
   this.version = "0.1.0";
-  this.accessToken = "";
+  this.accessToken = {};
   this.username = "";
   this.password = "";
   this.router = express.Router();
@@ -34,14 +34,25 @@ var Spark = function() {
   };
   this.loadRoutes = function() {
     debug("[LoadRoutes] Starting");
-    this.router.get("/devices", function(req, res) {
+    debug("[LoadRoutes] Loading /devices");
+    this.router.get("/devices", function(req, res, next) {
       res.send(JSON.stringify(this.knownDevices));
+      next();
     });
-    this.router.get("/sendCommand", function(req, res) {
+    debug("[LoadRoutes] Loading /sendCommand");
+    this.router.get("/sendCommand", function(req, res, next) {
       res.send("ok");
+      next();
     });
-    this.router.get("/", function(req, res) {
+    debug("[LoadRoutes] Loading /sendCommand/:device/:command");
+    this.router.get("/sendCommand/:device/:command", function(req, res, next) {
+      res.send("ok");
+      next();
+    });
+    debug("[LoadRoutes] Loading /");
+    this.router.get("/", function(req, res, next) {
       res.send("Spark!");
+      next();
     });
     debug("[LoadRoutes] Finishing");
     return this.router;
@@ -59,7 +70,8 @@ function _login(t) {
     debug("[Login] No auth method supplied");
   }
   return spark.login(loginMethod).then(function(token) {
-    this.accessToken = token;
+    t.accessToken = token;
+    debug("[Login] [Token]", t.accessToken);
     debug("[Login] Success:");//,token);
     debug("[Login] Finishing");
   }, function(error) {
