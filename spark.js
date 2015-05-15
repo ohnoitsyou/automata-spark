@@ -35,7 +35,6 @@ var Spark = function() {
     debug('[LoadRoutes] Starting');
     this.router.get('/devices', function(req, res) {
       res.send(JSON.stringify(this.knownDevices));
-      next();
     });
     this.router.get('/sendCommand', function(req, res) {
       res.send('ok');
