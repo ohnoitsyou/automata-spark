@@ -69,7 +69,7 @@ function _login(t) {
   var loginMethod = {};
   if(t.accessToken != "") {
     loginMethod['accessToken'] = t.accessToken;
-  } else if(this.username != "" && t.password != "") {
+  } else if(t.username != "" && t.password != "") {
     loginMethod['username'] = t.username;
     loginMethod['password'] = t.password;
   } else {
