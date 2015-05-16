@@ -2,6 +2,7 @@ var express = require('express');
 var spark = require('spark');
 var util = require('util');
 var debug = require('debug')('spark');
+var request = require("request");
 
 var Spark = function() {
   this.version = "0.1.0";
@@ -10,6 +11,7 @@ var Spark = function() {
   this.password = "";
   this.router = express.Router();
   this.knownDevices = [];
+  this.deviceRoles = [];
   this.deviceInterval = "";
   this.deviceRefreshInterval = 10000;
   this.load = function(options) {
@@ -33,11 +35,27 @@ var Spark = function() {
   },
   this.loadRoutes = function() {
     debug('[LoadRoutes] Starting');
+    // gotta store a reference to this, kinda annoying
+    var self = this;
     this.router.get('/devices', function(req, res) {
       res.send(JSON.stringify(this.knownDevices));
     });
     this.router.get('/sendCommand', function(req, res) {
       res.send('ok');
+    });
+    this.router.get("/sendCommand/:device/:command/:args", function(req, res) {
+      // for now I'm assuming that the command is verified on the sending end
+      debug("[sendCommand] %s %s", req.params.device, req.params.command);
+      var device = req.params.device;
+      var command = req.params.command;
+      var args = req.params.args || 0;
+      debug("device: %s command: %s args: %s",device, command, args);
+      if(isKnownDevice_(self.knownDevices,device)) {
+        callFunction_(self.knownDevices[device], command, args);
+        res.send('ok');
+      } else {
+        res.send('unknown');
+      }
     });
     this.router.get('/', function(req, res) {
       res.send('Spark!');
@@ -105,11 +123,37 @@ function _getDevices(t) {
             debug('[DeviceList] New offline device %s',device.name);
           }
         }
+        // find the devices role
+        if(device.connected && Object.keys(t.deviceRoles).indexOf(device.name) == -1) {
+          device.getVariable("role").then(function(data) {
+            debug("[VariableGet] success: %s", data.result);
+            t.deviceRoles[device.name] = data.result;
+          },function(err) {
+            debug("[VariableGet] failure: ", err);
+          });
+        }
       });
     }, function(error) {
         debug('[DeviceList] Failure getting devices %s',error);
     }
   );
+}
+
+function isKnownDevice_(knownDevices, device) {
+  var keys = Object.keys(knownDevices);
+  return keys.indexOf(device) != -1 ? true : false;
+}
+
+function callFunction_(device, command, args) {
+  return device.callFunction('setConfig',command + args, function(err, data) {
+    if(err) {
+      debug("error:", err);
+      return err;
+    } else {
+      debug("success:", data);
+      return data;
+    }
+  });
 }
 
 module.exports = Spark;
