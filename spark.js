@@ -45,11 +45,11 @@ var Spark = function() {
     });
     this.router.get("/sendCommand/:device/:command/:args", function(req, res) {
       // for now I'm assuming that the command is verified on the sending end
-      debug("[sendCommand] %s %s", req.params.device, req.params.command);
+      //debug("[sendCommand] %s %s", req.params.device, req.params.command);
       var device = req.params.device;
       var command = req.params.command;
       var args = req.params.args || 0;
-      debug("device: %s command: %s args: %s",device, command, args);
+      //debug("device: %s command: %s args: %s",device, command, args);
       if(isKnownDevice_(self.knownDevices,device)) {
         callFunction_(self.knownDevices[device], command, args);
         res.send('ok');
@@ -145,12 +145,13 @@ function isKnownDevice_(knownDevices, device) {
 }
 
 function callFunction_(device, command, args) {
+  debug("Calling function: %s %s %s", "setConfig", command, args);
   return device.callFunction('setConfig',command + args, function(err, data) {
     if(err) {
       debug("error:", err);
       return err;
     } else {
-      debug("success:", data);
+      debug("Success");
       return data;
     }
   });
