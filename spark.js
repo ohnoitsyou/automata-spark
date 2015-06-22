@@ -129,7 +129,10 @@ function _getDevices(t) {
             debug("[VariableGet] success: %s", data.result);
             t.deviceRoles[device.name] = data.result;
           },function(err) {
-            debug("[VariableGet] failure: ", err);
+            if(/variable not found/i.test(err.toString())) {
+              t.deviceRoles[device.name] = "none";
+            }
+            debug("[VariableGet] failure: %s", err);
           });
         }
       });
