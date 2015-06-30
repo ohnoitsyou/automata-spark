@@ -1,7 +1,7 @@
 {
   "name": "sparklib",
   "Description": "handler for spark modules",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "private": "true",
   "main": "spark.js",
   "dependencies": {
