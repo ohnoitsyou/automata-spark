@@ -141,10 +141,17 @@ var Spark = function() {
     debug("[LoadRoutes] Starting");
     var self = this;
     this.router.get("/devices", function(req, res) {
-      res.send(JSON.stringify(self.knownDevices));
+      debug(Object.keys(self.knownDevices));
+      res.send(Object.keys(self.knownDevices));
     });
-    this.router.get("/sendCommand", function(req, res) {
-      res.send("ok");
+    this.router.get("/deviceStatus/:device", function(req, res) {
+      var device = req.params.device;
+      if(isKnownDevice_(self.knownDevices, device)) {
+        var dev = self.knownDevices[device];
+        res.send(dev.connected);
+      } else {
+        res.send("unknown device");
+      }
     });
     this.router.get("/sendCommand/:device/:command/:args", function(req, res) {
       // for now I'm assuming that the command is verified on the sending end
@@ -168,6 +175,5 @@ var Spark = function() {
     return this.router;
   };
 };
-
 
 module.exports = Spark;
